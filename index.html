@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#fff1f7">
+<title>Stok Kedai HR</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#fff0f6,#f1f0ff,#eafff5,#fff7dc);color:#43374a}
+header{padding:24px 16px;background:#ffffffc9;text-align:center;border-bottom:3px solid #e9d9ff}
+h1{margin:0;font-size:25px;color:#8b5ba7}
+header p{margin:8px 0 0;font-size:13px}
+main{max-width:700px;margin:auto;padding:16px}
+button,input,textarea{font:inherit;border-radius:12px;padding:11px;border:1px solid #e2d4eb}
+button{background:#fff;color:#6e4b83;cursor:pointer;font-weight:bold}
+.primary{background:#b995d6;color:white;border:0}
+.danger{color:#b33;background:#fff0f0}
+input,textarea{width:100%;background:white}
+.card{background:#ffffffd9;padding:15px;border-radius:18px;margin:13px 0;box-shadow:0 3px 12px #8b6c9912}
+h2{font-size:19px;margin:4px 0 12px}
+h3{margin:5px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1}
+.small{font-size:12px;color:#81738a}
+.item{border-top:1px solid #eee3f3;padding:12px 0}
+.itemgrid{display:grid;grid-template-columns:minmax(0,1.5fr) 65px 65px;gap:6px;align-items:center}
+.itemgrid input{padding:8px;min-width:0}
+.note{margin-top:7px;font-size:12px}
+.hidden{display:none}
+.back{margin-bottom:12px}
+footer{text-align:center;padding:20px;font-size:12px;color:#87768e}
+</style>
+</head>
+<body>
+<header>
+<div style="font-size:30px">🌈 🛒 🌈</div>
+<h1>Stok Kedai HR</h1>
+<p>Kedai Runcit Hajjah Rahimah</p>
+</header>
+<main>
+<section id="home">
+<div class="card">
+<h2>🏪 Senarai Pembekal</h2>
+<div class="row">
+<input id="newSupplier" placeholder="Nama syarikat / pembekal">
+<button class="primary" onclick="addSupplier()">+ Tambah</button>
+</div>
+<p class="small">Tekan nama pembekal untuk lihat salesman, jenama dan barang.</p>
+</div>
+<div id="supplierList"></div>
+</section>
+<section id="detail" class="hidden">
+<button class="back" onclick="goHome()">← Kembali</button>
+<div class="card">
+<h2 id="supplierTitle"></h2>
+<div class="row">
+<button onclick="renameSupplier()">✏️ Tukar nama</button>
+<button class="danger" onclick="deleteSupplier()">🗑 Padam pembekal</button>
+</div>
+</div>
+<div class="card">
+<h2>🏷️ Salesman / Jenama</h2>
+<div class="row">
+<input id="newBrand" placeholder="Contoh: Nestlé / Darlie">
+<button class="primary" onclick="addBrand()">+ Tambah</button>
+</div>
+<div id="brandList"></div>
+</div>
+<div id="itemsSection" class="hidden">
+<div class="card">
+<h2 id="brandTitle"></h2>
+<div class="row">
+<button onclick="renameBrand()">✏️ Tukar nama</button>
+<button class="danger" onclick="deleteBrand()">🗑 Padam jenama</button>
+</div>
+<hr style="border:0;border-top:1px solid #eee">
+<div class="row">
+<input id="newItem" placeholder="Nama barang">
+<button class="primary" onclick="addItem()">+ Barang</button>
+</div>
+<p class="small">Ubah stok atau order terus di ruangan nombor. Nota boleh diisi untuk setiap barang.</p>
+<div class="itemgrid small"><b>ITEM</b><b>STOK</b><b>ORDER</b></div>
+<div id="itemList"></div>
+</div>
+</div>
+</section>
+<footer>🌸 Stok Kedai HR · Ringkas, mudah dan ceria 🌸</footer>
+</main>
+<script>
+const KEY='stokKedaiHR_v1';
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!Array.isArray(data))data=[
+{name:'Ang Kim Lin',brands:[
+{name:'AKL (Yeos + Calpis)',items:[]},
+{name:'Darlie',items:[]},{name:'Pet Pet',items:[]},{name:'Nestlé',items:[]}]},
+{name:'Edaran SNW',brands:[]},{name:'BST',brands:[]},{name:'KST (Kopiko)',brands:[]}
+];
+let si=-1,bi=-1;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){alert('Ruang simpanan mungkin penuh. Sila eksport atau buang data pelayar yang tidak diperlukan dengan berhati-hati.')}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addSupplier(){let n=document.getElementById('newSupplier').value.trim();if(!n)return;data.push({name:n,brands:[]});document.getElementById('newSupplier').value='';save();renderHome()}
+function renderHome(){document.getElementById('supplierList').innerHTML=data.map((s,i)=>`<div class="card"><button style="width:100%;text-align:left" onclick="openSupplier(${i})">🏢 <b>${esc(s.name)}</b><span style="float:right">›</span><div class="small">${s.brands.length} jenama / salesman</div></button></div>`).join('')}
+function openSupplier(i){si=i;bi=-1;document.getElementById('home').classList.add('hidden');document.getElementById('detail').classList.remove('hidden');document.getElementById('itemsSection').classList.add('hidden');renderSupplier()}
+function renderSupplier(){document.getElementById('supplierTitle').textContent=data[si].name;document.getElementById('brandList').innerHTML=data[si].brands.map((b,i)=>`<div class="item"><button style="width:100%;text-align:left" onclick="openBrand(${i})">🏷️ ${esc(b.name)} <span style="float:right">›</span><div class="small">${b.items.length} barang</div></button></div>`).join('')}
+function goHome(){document.getElementById('detail').classList.add('hidden');document.getElementById('home').classList.remove('hidden');renderHome()}
+function renameSupplier(){let n=prompt('Nama pembekal baharu:',data[si].name);if(n&&n.trim()){data[si].name=n.trim();save();renderSupplier();renderHome()}}
+function deleteSupplier(){if(confirm('Padam pembekal serta semua jenama dan barangnya?')){data.splice(si,1);si=-1;save();goHome()}}
+function addBrand(){let n=document.getElementById('newBrand').value.trim();if(!n)return;data[si].brands.push({name:n,items:[]});document.getElementById('newBrand').value='';save();renderSupplier()}
+function openBrand(i){bi=i;document.getElementById('itemsSection').classList.remove('hidden');renderBrand();document.getElementById('itemsSection').scrollIntoView({behavior:'smooth',block:'start'})}
+function renderBrand(){let b=data[si].brands[bi];document.getElementById('brandTitle').textContent=b.name;document.getElementById('itemList').innerHTML=b.items.map((it,i)=>`<div class="item"><div class="itemgrid"><input aria-label="Nama barang" value="${esc(it.name)}" onchange="changeItem(${i},'name',this.value)"><input aria-label="Stok" type="number" min="0" value="${Number(it.stock)||0}" onchange="changeItem(${i},'stock',this.value)"><input aria-label="Order" type="number" min="0" value="${Number(it.order)||0}" onchange="changeItem(${i},'order',this.value)"></div><textarea class="note" rows="2" placeholder="Nota salesman..." onchange="changeItem(${i},'note',this.value)">${esc(it.note||'')}</textarea><button class="danger note" onclick="deleteItem(${i})">Padam barang</button></div>`).join('')||'<p class="small">Belum ada barang. Tambah barang di atas 😊</p>'}
+function renameBrand(){let b=data[si].brands[bi],n=prompt('Nama baharu:',b.name);if(n&&n.trim()){b.name=n.trim();save();renderBrand();renderSupplier()}}
+function deleteBrand(){if(confirm('Padam jenama dan semua barangnya?')){data[si].brands.splice(bi,1);bi=-1;save();document.getElementById('itemsSection').classList.add('hidden');renderSupplier()}}
+function addItem(){let n=document.getElementById('newItem').value.trim();if(!n)return;data[si].brands[bi].items.push({name:n,stock:0,order:0,note:''});document.getElementById('newItem').value='';save();renderBrand();renderSupplier()}
+function changeItem(i,k,v){let it=data[si].brands[bi].items[i];it[k]=(k==='stock'||k==='order')?Math.max(0,Number(v)||0):v;save();if(k==='name')renderSupplier()}
+function deleteItem(i){if(confirm('Padam barang ini?')){data[si].brands[bi].items.splice(i,1);save();renderBrand();renderSupplier()}}
+renderHome();
+</script>
+</body>
+</html>
