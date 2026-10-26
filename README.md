@@ -1,0 +1,2 @@
+# KRHR
+Aplikasi rekod stok
