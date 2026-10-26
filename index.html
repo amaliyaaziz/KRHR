@@ -40,6 +40,17 @@ footer{text-align:center;padding:20px;font-size:12px;color:#87768e}
 <p>Kedai Runcit Hajjah Rahimah</p>
 </header>
 <main>
+  
+<div class="card">
+  <h2>💾 Backup & Restore</h2>
+  <p class="small">Simpan salinan rekod atau pulihkan rekod daripada fail backup.</p>
+  <div class="row">
+    <button class="primary" onclick="backupData()">📥 Backup</button>
+    <button onclick="document.getElementById('restoreFile').click()">📤 Restore</button>
+  </div>
+  <input id="restoreFile" type="file" accept=".json,application/json"
+    style="display:none" onchange="restoreData(event)">
+</div>
 <section id="home">
 <div class="card">
 <h2>🏪 Senarai Pembekal</h2>
@@ -116,7 +127,77 @@ function deleteBrand(){if(confirm('Padam jenama dan semua barangnya?')){data[si]
 function addItem(){let n=document.getElementById('newItem').value.trim();if(!n)return;data[si].brands[bi].items.push({name:n,stock:0,order:0,note:''});document.getElementById('newItem').value='';save();renderBrand();renderSupplier()}
 function changeItem(i,k,v){let it=data[si].brands[bi].items[i];it[k]=(k==='stock'||k==='order')?Math.max(0,Number(v)||0):v;save();if(k==='name')renderSupplier()}
 function deleteItem(i){if(confirm('Padam barang ini?')){data[si].brands[bi].items.splice(i,1);save();renderBrand();renderSupplier()}}
-renderHome();
+
+function backupData(){
+  try{
+    const file = new Blob(
+      [JSON.stringify(data, null, 2)],
+      {type:'application/json'}
+    );
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Backup-Stok-KRHR-' +
+      new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    alert('Backup dimulakan. Semak folder Downloads telefon awak.');
+  }catch(e){
+    alert('Backup gagal. Sila cuba lagi.');
+  }
+}
+
+function restoreData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  if(!confirm('Restore akan menggantikan semua rekod semasa. Buat backup dahulu jika perlu. Teruskan?')){
+    event.target.value='';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const restored = JSON.parse(reader.result);
+      if(!Array.isArray(restored) ||
+         !restored.every(s =>
+           s && typeof s.name === 'string' &&
+           Array.isArray(s.brands) &&
+           s.brands.every(b =>
+             b && typeof b.name === 'string' &&
+             Array.isArray(b.items) &&
+             b.items.every(it =>
+               it && typeof it.name === 'string'
+             )
+           )
+         )){
+        throw new Error('Format fail tidak sah');
+      }
+
+      localStorage.setItem(KEY, JSON.stringify(restored));
+      data = restored;
+      si = -1;
+      bi = -1;
+      document.getElementById('detail').classList.add('hidden');
+      document.getElementById('home').classList.remove('hidden');
+      document.getElementById('itemsSection').classList.add('hidden');
+      renderHome();
+      alert('Restore berjaya! Rekod telah dipulihkan.');
+    }catch(e){
+      alert('Fail backup tidak sah atau rosak. Rekod semasa tidak digantikan.');
+    }
+    event.target.value='';
+  };
+  reader.onerror = function(){
+    alert('Tidak dapat membaca fail. Cuba sekali lagi.');
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+  renderHome();
 </script>
 </body>
 </html>
